@@ -1,9 +1,8 @@
-package jq_test
+package jq
 
 import (
 	"testing"
 
-	"github.com/ashb/jqrepl/jq"
 	"github.com/cheekybits/is"
 )
 
@@ -11,12 +10,12 @@ func TestJvKind(t *testing.T) {
 	is := is.New(t)
 
 	cases := []struct {
-		*jq.Jv
-		jq.JvKind
+		*Jv
+		JvKind
 		string
 	}{
-		{jq.JvNull(), jq.JV_KIND_NULL, "null"},
-		{jq.JvFromString("a"), jq.JV_KIND_STRING, "string"},
+		{JvNull(), JV_KIND_NULL, "null"},
+		{JvFromString("a"), JV_KIND_STRING, "string"},
 	}
 
 	for _, c := range cases {
@@ -29,7 +28,7 @@ func TestJvKind(t *testing.T) {
 func TestJvString(t *testing.T) {
 	is := is.New(t)
 
-	jv := jq.JvFromString("test")
+	jv := JvFromString("test")
 	defer jv.Free()
 
 	str, err := jv.String()
@@ -46,7 +45,7 @@ func TestJvStringOnNonStringType(t *testing.T) {
 	is := is.New(t)
 
 	// Test that on a non-string value we get a go error, not a C assert
-	jv := jq.JvNull()
+	jv := JvNull()
 	defer jv.Free()
 
 	_, err := jv.String()
@@ -56,12 +55,12 @@ func TestJvStringOnNonStringType(t *testing.T) {
 func TestJvFromJSONString(t *testing.T) {
 	is := is.New(t)
 
-	jv, err := jq.JvFromJSONString("[]")
+	jv, err := JvFromJSONString("[]")
 	is.NoErr(err)
 	is.OK(jv)
-	is.Equal(jv.Kind(), jq.JV_KIND_ARRAY)
+	is.Equal(jv.Kind(), JV_KIND_ARRAY)
 
-	jv, err = jq.JvFromJSONString("not valid")
+	jv, err = JvFromJSONString("not valid")
 	is.Err(err)
 	is.Nil(jv)
 }
@@ -69,9 +68,9 @@ func TestJvFromJSONString(t *testing.T) {
 func TestJvFromFloat(t *testing.T) {
 	is := is.New(t)
 
-	jv := jq.JvFromFloat(1.23)
+	jv := JvFromFloat(1.23)
 	is.OK(jv)
-	is.Equal(jv.Kind(), jq.JV_KIND_NUMBER)
+	is.Equal(jv.Kind(), JV_KIND_NUMBER)
 	gv := jv.ToGoVal()
 	n, ok := gv.(float64)
 	is.True(ok)
@@ -82,63 +81,63 @@ func TestJvFromInterface(t *testing.T) {
 	is := is.New(t)
 
 	// Null
-	jv, err := jq.JvFromInterface(nil)
+	jv, err := JvFromInterface(nil)
 	is.NoErr(err)
 	is.OK(jv)
-	is.Equal(jv.Kind(), jq.JV_KIND_NULL)
+	is.Equal(jv.Kind(), JV_KIND_NULL)
 
 	// Boolean
-	jv, err = jq.JvFromInterface(true)
+	jv, err = JvFromInterface(true)
 	is.NoErr(err)
 	is.OK(jv)
-	is.Equal(jv.Kind(), jq.JV_KIND_TRUE)
+	is.Equal(jv.Kind(), JV_KIND_TRUE)
 
-	jv, err = jq.JvFromInterface(false)
+	jv, err = JvFromInterface(false)
 	is.NoErr(err)
 	is.OK(jv)
-	is.Equal(jv.Kind(), jq.JV_KIND_FALSE)
+	is.Equal(jv.Kind(), JV_KIND_FALSE)
 
 	// Float
-	jv, err = jq.JvFromInterface(1.23)
+	jv, err = JvFromInterface(1.23)
 	is.NoErr(err)
 	is.OK(jv)
-	is.Equal(jv.Kind(), jq.JV_KIND_NUMBER)
+	is.Equal(jv.Kind(), JV_KIND_NUMBER)
 	gv := jv.ToGoVal()
 	n, ok := gv.(float64)
 	is.True(ok)
 	is.Equal(n, float64(1.23))
 
 	// Integer
-	jv, err = jq.JvFromInterface(456)
+	jv, err = JvFromInterface(456)
 	is.NoErr(err)
 	is.OK(jv)
-	is.Equal(jv.Kind(), jq.JV_KIND_NUMBER)
+	is.Equal(jv.Kind(), JV_KIND_NUMBER)
 	gv = jv.ToGoVal()
 	n2, ok := gv.(int)
 	is.True(ok)
 	is.Equal(n2, 456)
 
 	// String
-	jv, err = jq.JvFromInterface("test")
+	jv, err = JvFromInterface("test")
 	is.NoErr(err)
 	is.OK(jv)
-	is.Equal(jv.Kind(), jq.JV_KIND_STRING)
+	is.Equal(jv.Kind(), JV_KIND_STRING)
 	gv = jv.ToGoVal()
 	s, ok := gv.(string)
 	is.True(ok)
 	is.Equal(s, "test")
 
-	jv, err = jq.JvFromInterface([]string{"test", "one", "two"})
+	jv, err = JvFromInterface([]string{"test", "one", "two"})
 	is.NoErr(err)
 	is.OK(jv)
-	is.Equal(jv.Kind(), jq.JV_KIND_ARRAY)
+	is.Equal(jv.Kind(), JV_KIND_ARRAY)
 	gv = jv.ToGoVal()
 	is.Equal(gv.([]interface{})[2], "two")
 
-	jv, err = jq.JvFromInterface(map[string]int{"one": 1, "two": 2})
+	jv, err = JvFromInterface(map[string]int{"one": 1, "two": 2})
 	is.NoErr(err)
 	is.OK(jv)
-	is.Equal(jv.Kind(), jq.JV_KIND_OBJECT)
+	is.Equal(jv.Kind(), JV_KIND_OBJECT)
 	gv = jv.ToGoVal()
 	is.Equal(gv.(map[string]interface{})["two"], 2)
 }
@@ -146,13 +145,13 @@ func TestJvFromInterface(t *testing.T) {
 func TestJvDump(t *testing.T) {
 	is := is.New(t)
 
-	jv := jq.JvFromString("test")
+	jv := JvFromString("test")
 	defer jv.Free()
 
-	dump := jv.Copy().Dump(jq.JvPrintNone)
+	dump := jv.Copy().Dump(JvPrintNone)
 
 	is.Equal(`"test"`, dump)
-	dump = jv.Copy().Dump(jq.JvPrintColour)
+	dump = jv.Copy().Dump(JvPrintColour)
 
 	is.Equal([]byte("\x1b[0;32m"+`"test"`+"\x1b[0m"), []byte(dump))
 }
@@ -160,7 +159,7 @@ func TestJvDump(t *testing.T) {
 func TestJvInvalid(t *testing.T) {
 	is := is.New(t)
 
-	jv := jq.JvInvalid()
+	jv := JvInvalid()
 
 	is.False(jv.IsValid())
 
@@ -168,18 +167,18 @@ func TestJvInvalid(t *testing.T) {
 	is.False(ok) // "Expected no Invalid message"
 
 	jv = jv.GetInvalidMessage()
-	is.Equal(jv.Kind(), jq.JV_KIND_NULL)
+	is.Equal(jv.Kind(), JV_KIND_NULL)
 }
 
 func TestJvInvalidWithMessage_string(t *testing.T) {
 	is := is.New(t)
 
-	jv := jq.JvInvalidWithMessage(jq.JvFromString("Error message 1"))
+	jv := JvInvalidWithMessage(JvFromString("Error message 1"))
 
 	is.False(jv.IsValid())
 
 	msg := jv.Copy().GetInvalidMessage()
-	is.Equal(msg.Kind(), jq.JV_KIND_STRING)
+	is.Equal(msg.Kind(), JV_KIND_STRING)
 	msg.Free()
 
 	str, ok := jv.GetInvalidMessageAsString()
@@ -190,12 +189,12 @@ func TestJvInvalidWithMessage_string(t *testing.T) {
 func TestJvInvalidWithMessage_object(t *testing.T) {
 	is := is.New(t)
 
-	jv := jq.JvInvalidWithMessage(jq.JvObject())
+	jv := JvInvalidWithMessage(JvObject())
 
 	is.False(jv.IsValid())
 
 	msg := jv.Copy().GetInvalidMessage()
-	is.Equal(msg.Kind(), jq.JV_KIND_OBJECT)
+	is.Equal(msg.Kind(), JV_KIND_OBJECT)
 	msg.Free()
 
 	str, ok := jv.GetInvalidMessageAsString()

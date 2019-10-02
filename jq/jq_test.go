@@ -1,14 +1,12 @@
-package jq_test
+package jq
 
 import (
 	"strings"
 	"testing"
-
-	"github.com/ashb/jqrepl/jq"
 )
 
 func TestJqNewClose(t *testing.T) {
-	jq, err := jq.New()
+	jq, err := New()
 
 	if err != nil {
 		t.Errorf("Error initializing jq_state: %v", err)
@@ -22,23 +20,23 @@ func TestJqNewClose(t *testing.T) {
 }
 
 func TestJqCloseRace(t *testing.T) {
-	state, err := jq.New()
+	state, err := New()
 
 	if err != nil {
 		t.Errorf("Error initializing jq_state: %v", err)
 	}
 
-	cIn, _, _ := state.Start(".", jq.JvArray())
+	cIn, _, _ := state.Start(".", JvArray())
 	go state.Close()
 	go close(cIn)
 }
 
-func feedJq(val *jq.Jv, in chan<- *jq.Jv, out <-chan *jq.Jv, errs <-chan error) ([]*jq.Jv, []error) {
+func feedJq(val *Jv, in chan<- *Jv, out <-chan *Jv, errs <-chan error) ([]*Jv, []error) {
 	if val == nil {
 		close(in)
 		in = nil
 	}
-	outputs := make([]*jq.Jv, 0)
+	outputs := make([]*Jv, 0)
 	errors := make([]error, 0)
 	for errs != nil && out != nil {
 		select {
@@ -64,7 +62,7 @@ func feedJq(val *jq.Jv, in chan<- *jq.Jv, out <-chan *jq.Jv, errs <-chan error) 
 }
 
 func TestStartCompileError(t *testing.T) {
-	state, err := jq.New()
+	state, err := New()
 
 	if err != nil {
 		t.Errorf("Error initializing jq_state: %v", err)
@@ -72,7 +70,7 @@ func TestStartCompileError(t *testing.T) {
 	defer state.Close()
 
 	const program = "a b"
-	cIn, cOut, cErr := state.Start(program, jq.JvArray())
+	cIn, cOut, cErr := state.Start(program, JvArray())
 	_, errors := feedJq(nil, cIn, cOut, cErr)
 
 	// JQ might (and currently does) report multiple errors. One of them will
@@ -95,7 +93,7 @@ func TestStartCompileError(t *testing.T) {
 }
 
 func TestCompileError(t *testing.T) {
-	state, err := jq.New()
+	state, err := New()
 
 	if err != nil {
 		t.Errorf("Error initializing jq_state: %v", err)
@@ -103,7 +101,7 @@ func TestCompileError(t *testing.T) {
 	defer state.Close()
 
 	const program = "a b"
-	errors := state.Compile(program, jq.JvArray())
+	errors := state.Compile(program, JvArray())
 
 	// JQ might (and currently does) report multiple errors. One of them will
 	// contain our input program. Check for that but don't be overly-specific
@@ -125,7 +123,7 @@ func TestCompileError(t *testing.T) {
 }
 
 func TestCompileGood(t *testing.T) {
-	state, err := jq.New()
+	state, err := New()
 
 	if err != nil {
 		t.Errorf("Error initializing jq_state: %v", err)
@@ -133,7 +131,7 @@ func TestCompileGood(t *testing.T) {
 	defer state.Close()
 
 	const program = "."
-	errors := state.Compile(program, jq.JvArray())
+	errors := state.Compile(program, JvArray())
 
 	// JQ might (and currently does) report multiple errors. One of them will
 	// contain our input program. Check for that but don't be overly-specific
@@ -145,19 +143,19 @@ func TestCompileGood(t *testing.T) {
 }
 
 func TestJqSimpleProgram(t *testing.T) {
-	state, err := jq.New()
+	state, err := New()
 
 	if err != nil {
 		t.Errorf("Error initializing state_state: %v", err)
 	}
 	defer state.Close()
 
-	input, err := jq.JvFromJSONString("{\"a\": 123}")
+	input, err := JvFromJSONString("{\"a\": 123}")
 	if err != nil {
 		t.Error(err)
 	}
 
-	cIn, cOut, cErrs := state.Start(".a", jq.JvArray())
+	cIn, cOut, cErrs := state.Start(".a", JvArray())
 	outputs, errs := feedJq(input, cIn, cOut, cErrs)
 
 	if len(errs) > 0 {
@@ -172,19 +170,19 @@ func TestJqSimpleProgram(t *testing.T) {
 }
 
 func TestJqNonChannelInterface(t *testing.T) {
-	state, err := jq.New()
+	state, err := New()
 
 	if err != nil {
 		t.Errorf("Error initializing state_state: %v", err)
 	}
 	defer state.Close()
 
-	input, err := jq.JvFromJSONString("{\"a\": 123}")
+	input, err := JvFromJSONString("{\"a\": 123}")
 	if err != nil {
 		t.Error(err)
 	}
 
-	errs := state.Compile(".a", jq.JvArray())
+	errs := state.Compile(".a", JvArray())
 	if errs != nil {
 		t.Errorf("Expected no errors, but got %#v", errs)
 	}
@@ -202,19 +200,19 @@ func TestJqNonChannelInterface(t *testing.T) {
 }
 
 func TestJqRuntimeError(t *testing.T) {
-	state, err := jq.New()
+	state, err := New()
 
 	if err != nil {
 		t.Errorf("Error initializing state_state: %v", err)
 	}
 	defer state.Close()
 
-	input, err := jq.JvFromJSONString(`{"a": 123}`)
+	input, err := JvFromJSONString(`{"a": 123}`)
 	if err != nil {
 		t.Error(err)
 	}
 
-	cIn, cOut, cErrs := state.Start(".[0]", jq.JvArray())
+	cIn, cOut, cErrs := state.Start(".[0]", JvArray())
 	_, errors := feedJq(input, cIn, cOut, cErrs)
 
 	if l := len(errors); l != 1 {
